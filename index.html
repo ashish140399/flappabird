@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<link rel="stylesheet" href="style.css">
+</head>
+<style>
+    html, body{
+        padding: 0;
+        margin: 0;
+        max-height: 100vh;
+        overflow-y: hidden;
+        position: relative;
+        top: 0;
+    }
+.game_background{
+    background: skyblue;
+    width: 100%;
+    height: 100vh;
+}
+.scorecard{
+    position: fixed;
+    right: 5%;
+    top: 5%;
+    font-size: 40px;
+    color: gold;
+}
+.player {
+    height: 100px;
+    width: 160px;
+    position: fixed;
+    top: 40vh;
+    left: 30vw;
+    z-index: 100;
+}
+  
+.enemies {
+    position: fixed;
+    top: 40vh;
+    left: 100vw;
+    height: 70vh;
+    width: 6vw;
+    background-color: green;
+}
+  
+</style>
+<body>
+	<div class="game_background"></div>
+    <img src="./player.png" class="player" alt="image">
+    <div class="scorecard">
+        Score :  <span class="myscore">0</span>
+    </div>
+    <div class="modalOuter">
+        <div class="content">
+
+        </div>
+    </div>
+</body>
+<script>
+
+
+// Some game constants
+// background scrolling speed
+let speed = 2;
+
+// gravity for character
+let gravity = 0.2
+
+// game character
+let character = document.querySelector(".player");
+
+let background = document.querySelector(".game_background").getBoundingClientRect();
+
+
+// getting details like positioning of character;
+let characterProps = character.getBoundingClientRect();
+
+let state = 'Start'
+
+let myscore =  document.querySelector(".myscore");
+let content =  document.querySelector(".content");
+
+document.addEventListener('keydown',(e) =>{
+    // remove all enemies
+    if(e.key == 'Enter' && state != 'Play'){
+        document.querySelectorAll('.enemies').forEach((e) =>{
+            e.remove();
+        });
+    }
+    state = "Play";
+    myscore.innerHTML ="0";
+    character.style.top = "50vh"
+    playflappybird();
+
+})
+
+const playflappybird = () =>{
+    function movecharacter(){
+        if(state!="Play") return;
+
+        let enemies = document.querySelectorAll('.enemies');
+        enemies.forEach((e)=>{
+            let enemyProps = e.getBoundingClientRect();
+            characterProps = character.getBoundingClientRect();
+            if(enemyProps.right <= 0){
+                e.remove()
+            }else{
+
+                // checking collision
+                if(characterProps.left < enemyProps.left + enemyProps.width && characterProps.left +  characterProps.width > enemyProps.left  && characterProps.top < enemyProps.top + enemyProps.height && characterProps.top + characterProps.height > enemyProps.top){
+                    state = "End";
+                    content.innerHTML="Press Enter to Start Again !!";
+                    return;
+                }else{
+                    if(enemyProps.right < characterProps.left && enemyProps.right + speed >= characterProps.left && e.incScore == '1'){
+                        myscore.innerHTML=+myscore.innerHTML +1;
+                    }
+                    e.style.left = enemyProps.left - speed +'px'
+                }
+            }
+        })
+        requestAnimationFrame(movecharacter)
+    }
+    requestAnimationFrame(movecharacter)
+
+
+    let characterYpos = 0;
+
+    function gamegravity(){
+        if(state != 'Play') return;
+        characterYpos = characterYpos + gravity;
+        document.addEventListener('keydown',(e) =>{
+            if(e.key == 'ArrowUp' || e.key == ' '){
+                characterYpos = -3.6;
+            }
+        })
+
+        if(characterProps.top <=0 || characterProps.bottom>=background.bottom){
+            state = "End";
+            content.innerHTML = "Touched in bottom , please Restart";
+            return;
+        }
+        character.style.top = characterProps.top + characterYpos +'px';
+        characterProps = character.getBoundingClientRect()
+        requestAnimationFrame(gamegravity)
+    }
+    requestAnimationFrame(gamegravity)
+
+
+    let enemiesSepration = 0;
+    let enemiesGap = 35;
+
+    function generateEnemies(){
+        if(state!="Play") return;
+
+        if(enemiesSepration > 100){
+            enemiesSepration=0;
+            let enemyPosition = Math.floor(Math.random() * 40) + 7;
+            let enemyInverted = document.createElement('div');
+            enemyInverted.style.top = enemyPosition - 70 + 'vh';
+            enemyInverted.style.left = '100vw';
+            enemyInverted.className = 'enemies';
+            
+            
+
+            document.body.appendChild(enemyInverted);
+            let enemyHurdle = document.createElement('div');
+            enemyHurdle.className = 'enemies';
+            enemyHurdle.style.top = enemyPosition + enemiesGap + 'vh';
+            enemyHurdle.style.left = '100vw';
+            enemyHurdle.incScore = '1';
+            document.body.appendChild(enemyHurdle);
+        }
+
+        enemiesSepration++;
+        requestAnimationFrame(generateEnemies)
+
+        
+    }
+    requestAnimationFrame(generateEnemies)
+
+
+}
+
+
+</script>
+</html>
